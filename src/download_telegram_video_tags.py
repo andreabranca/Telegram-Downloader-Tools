@@ -16,6 +16,7 @@ def parse_args():
     p.add_argument("--out", default="./downloads", help="Pasta de saída")
     p.add_argument("--limit", type=int, default=0, help="Limite de mensagens por tag (0 = sem limite)")
     p.add_argument("--session", default="session", help="Nome do arquivo de sessão Telethon")
+    p.add_argument("--max-flood-wait", type=int, default=300, help="Tempo máximo (em segundos) de FloodWait automático antes de abortar (padrão: 300s)")
     return p.parse_args()
 
 def safe_filename(s: str) -> str:
@@ -97,8 +98,15 @@ async def main():
                 entity = await client.get_input_entity(args.target)
                 break
             except FloodWaitError as e:
-                # Telethon exige aguardar; respeitar o tempo e tentar novamente
-                print(f"\n⏳ Flood wait ao resolver target ({e.seconds}s) → aguardando...")
+                # Telethon exige aguardar; se o tempo for muito grande, abortar com instrução
+                print(f"\n⏳ Flood wait ao resolver target ({e.seconds}s)")
+                if e.seconds > args.max_flood_wait:
+                    raise SystemExit(
+                        f"Flood wait muito longo ({e.seconds}s) ao resolver target. "
+                        f"Recomendo aguardar manualmente ou rodar novamente com --max-flood-wait {e.seconds} "
+                        "se quiser que o script espere esse tempo automaticamente."
+                    )
+                print(f"→ Aguardando {e.seconds}s (máx automático: {args.max_flood_wait}s)")
                 await asyncio.sleep(e.seconds + 1)
 
         # Iterar mensagens; se ocorrer FloodWait durante a iteração, aguardar e reiniciar
@@ -168,7 +176,14 @@ async def main():
                 # se o async for terminou sem FloodWait, encerrar o while
                 break
             except FloodWaitError as e:
-                print(f"\n⏳ Flood wait durante iteração ({e.seconds}s) → aguardando e reiniciando...")
+                print(f"\n⏳ Flood wait durante iteração ({e.seconds}s)")
+                if e.seconds > args.max_flood_wait:
+                    raise SystemExit(
+                        f"Flood wait muito longo ({e.seconds}s) durante iteração. "
+                        f"Rode novamente com --max-flood-wait {e.seconds} para aceitar essa espera automática, "
+                        "ou aguarde manualmente e tente novamente mais tarde."
+                    )
+                print(f"→ Aguardando {e.seconds}s (máx automático: {args.max_flood_wait}s) e reiniciando...")
                 await asyncio.sleep(e.seconds + 1)
         
         print(f"✅ Tag {tag}: {count_tag} vídeos baixados.")
