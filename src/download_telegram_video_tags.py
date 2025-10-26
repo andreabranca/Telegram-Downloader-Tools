@@ -90,63 +90,86 @@ async def main():
     for tag in tags:
         print(f"\n🔍 Procurando vídeos com a tag: {tag}")
         count_tag = 0
-        
-        async for msg in client.iter_messages(args.target, search=tag, limit=(args.limit or None)):
-            total_encontrados += 1
-            
-            if not msg.message or tag not in msg.message:
-                continue
-            if not msg.media:
-                continue
-            
-            is_video = getattr(msg, "video", None) is not None
-            mime = getattr(msg.media, "mime_type", "") if msg.media else ""
-            if not is_video and not mime.startswith("video"):
-                continue
-            
-            # Extrair nome do vídeo da última linha da mensagem
-            lines = [l.strip() for l in msg.message.split('\n') if l.strip()]
-            video_name = lines[-1] if lines else f"msg{msg.id}"
-            
-            # Remover prefixos como "===", "==", "=" do início
-            while video_name.startswith('='):
-                video_name = video_name[1:].strip()
-            
-            # Nome do arquivo
-            date_str = msg.date.strftime("%Y%m%d_%H%M%S") if msg.date else "nodate"
-            filename = safe_filename(video_name) + ".mp4"
-            out_path = os.path.join(args.out, filename)
-            
-            if os.path.exists(out_path):
-                print(f"⏩ Já existe: {filename}")
-                continue
-            
+
+        # Resolver a entidade do target uma vez, tentando novamente se houver FloodWait
+        while True:
             try:
-                print(f"\n⏬ Baixando: {filename}")
-                # Resetar variáveis globais antes de cada download
-                global last_progress_time, last_progress_bytes
-                last_progress_time = time.time()
-                last_progress_bytes = 0
-                
-                await client.download_media(msg, file=out_path, progress_callback=progress_callback)
-                print()  # Nova linha após completar o download
-                
-                total_baixados += 1
-                count_tag += 1
-                
-                registros.append({
-                    "tag": tag,
-                    "msg_id": msg.id,
-                    "data": msg.date.strftime("%Y-%m-%d %H:%M:%S") if msg.date else "",
-                    "arquivo": filename,
-                    "legenda": msg.message or "",
-                })
-                
+                entity = await client.get_input_entity(args.target)
+                break
             except FloodWaitError as e:
-                print(f"\n⏳ Flood wait ({e.seconds}s) → aguardando...")
+                # Telethon exige aguardar; respeitar o tempo e tentar novamente
+                print(f"\n⏳ Flood wait ao resolver target ({e.seconds}s) → aguardando...")
                 await asyncio.sleep(e.seconds + 1)
-            except Exception as e:
-                print(f"\n Erro ao baixar msg {msg.id}: {e}")
+
+        # Iterar mensagens; se ocorrer FloodWait durante a iteração, aguardar e reiniciar
+        # Usar um conjunto para evitar reprocessar mensagens já vistas se precisarmos reiniciar a iteração
+        seen_msg_ids = set()
+        while True:
+            try:
+                async for msg in client.iter_messages(entity, search=tag, limit=(args.limit or None)):
+                    if msg.id in seen_msg_ids:
+                        continue
+                    seen_msg_ids.add(msg.id)
+                    total_encontrados += 1
+
+                    if not msg.message or tag not in msg.message:
+                        continue
+                    if not msg.media:
+                        continue
+
+                    is_video = getattr(msg, "video", None) is not None
+                    mime = getattr(msg.media, "mime_type", "") if msg.media else ""
+                    if not is_video and not mime.startswith("video"):
+                        continue
+
+                    # Extrair nome do vídeo da última linha da mensagem
+                    lines = [l.strip() for l in msg.message.split('\n') if l.strip()]
+                    video_name = lines[-1] if lines else f"msg{msg.id}"
+
+                    # Remover prefixos como "===" , "==", "=" do início
+                    while video_name.startswith('='):
+                        video_name = video_name[1:].strip()
+
+                    # Nome do arquivo
+                    date_str = msg.date.strftime("%Y%m%d_%H%M%S") if msg.date else "nodate"
+                    filename = safe_filename(video_name) + ".mp4"
+                    out_path = os.path.join(args.out, filename)
+
+                    if os.path.exists(out_path):
+                        print(f"⏩ Já existe: {filename}")
+                        continue
+
+                    try:
+                        print(f"\n⏬ Baixando: {filename}")
+                        # Resetar variáveis globais antes de cada download
+                        global last_progress_time, last_progress_bytes
+                        last_progress_time = time.time()
+                        last_progress_bytes = 0
+
+                        await client.download_media(msg, file=out_path, progress_callback=progress_callback)
+                        print()  # Nova linha após completar o download
+
+                        total_baixados += 1
+                        count_tag += 1
+
+                        registros.append({
+                            "tag": tag,
+                            "msg_id": msg.id,
+                            "data": msg.date.strftime("%Y-%m-%d %H:%M:%S") if msg.date else "",
+                            "arquivo": filename,
+                            "legenda": msg.message or "",
+                        })
+
+                    except FloodWaitError as e:
+                        print(f"\n⏳ Flood wait ({e.seconds}s) → aguardando...")
+                        await asyncio.sleep(e.seconds + 1)
+                    except Exception as e:
+                        print(f"\n Erro ao baixar msg {msg.id}: {e}")
+                # se o async for terminou sem FloodWait, encerrar o while
+                break
+            except FloodWaitError as e:
+                print(f"\n⏳ Flood wait durante iteração ({e.seconds}s) → aguardando e reiniciando...")
+                await asyncio.sleep(e.seconds + 1)
         
         print(f"✅ Tag {tag}: {count_tag} vídeos baixados.")
     
