@@ -196,6 +196,14 @@ class TelegramDownloaderGUI:
             progress_frame, text="Progresso:", font=ctk.CTkFont(weight="bold")
         ).pack(anchor="w", padx=10, pady=(5, 0))
 
+        self.current_file_label = ctk.CTkLabel(
+            progress_frame, 
+            text="Nenhum arquivo em andamento", 
+            font=ctk.CTkFont(size=11, slant="italic"),
+            anchor="w"
+        )
+        self.current_file_label.pack(fill="x", padx=10, pady=(0, 5))
+
         self.progress_bar = ctk.CTkProgressBar(progress_frame)
         self.progress_bar.pack(fill="x", padx=10, pady=5)
         self.progress_bar.set(0)
@@ -205,18 +213,43 @@ class TelegramDownloaderGUI:
         )
         self.progress_label.pack(anchor="w", padx=10, pady=(0, 5))
 
-        # Área de log
+        # Área de log colapsável
         log_frame = ctk.CTkFrame(main_frame)
         log_frame.pack(fill="both", expand=True, padx=10, pady=5)
-
-        ctk.CTkLabel(log_frame, text="Log:", font=ctk.CTkFont(weight="bold")).pack(
-            anchor="w", padx=10, pady=(5, 0)
+        
+        # Cabeçalho da área de log com botão de alternar
+        log_header = ctk.CTkFrame(log_frame, fg_color="transparent")
+        log_header.pack(fill="x", padx=5, pady=0)
+        
+        self.log_visible = ctk.BooleanVar(value=False)
+        self.toggle_log_btn = ctk.CTkButton(
+            log_header,
+            text="Mostrar Log ▼",
+            command=self.toggle_log_visibility,
+            width=120,
+            height=24,
+            font=ctk.CTkFont(weight="bold", size=11),
+            fg_color="transparent",
+            text_color=("gray10", "gray90"),
+            hover=False,
+            anchor="w"
         )
-
+        self.toggle_log_btn.pack(side="left", padx=5, pady=2)
+        
+        # Frame que conterá o texto do log (inicialmente oculto)
+        self.log_content_frame = ctk.CTkFrame(log_frame, fg_color="transparent")
+        self.log_content_frame.pack(fill="both", expand=True, padx=0, pady=0)
+        
         self.log_text = ctk.CTkTextbox(
-            log_frame, wrap="word", height=250, font=ctk.CTkFont(size=11)
+            self.log_content_frame, 
+            wrap="word", 
+            height=0,  # Altura 0 quando oculto
+            font=ctk.CTkFont(size=11)
         )
         self.log_text.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        # Inicialmente oculto
+        self.log_content_frame.pack_forget()
 
     def browse_folder(self):
         folder = filedialog.askdirectory()
@@ -224,15 +257,34 @@ class TelegramDownloaderGUI:
             self.output_entry.delete(0, "end")
             self.output_entry.insert(0, folder)
 
+    def toggle_log_visibility(self):
+        """Alterna a visibilidade da área de log"""
+        if self.log_visible.get():
+            self.log_content_frame.pack_forget()
+            self.toggle_log_btn.configure(text="Mostrar Log ▼")
+            self.log_visible.set(False)
+        else:
+            self.log_content_frame.pack(fill="both", expand=True, padx=0, pady=0)
+            self.toggle_log_btn.configure(text="Ocultar Log ▲")
+            self.log_visible.set(True)
+        # Ajusta a janela para caber o conteúdo
+        self.root.update_idletasks()
+    
     def log(self, message):
         """Adiciona mensagem ao log"""
+        self.log_text.configure(state="normal")
         self.log_text.insert("end", message + "\n")
         self.log_text.see("end")
+        self.log_text.configure(state="disabled")
         self.root.update_idletasks()
 
-    def progress_callback(self, current, total):
+    def progress_callback(self, current, total, filename=None):
         """Callback para mostrar progresso do download"""
         if total > 0:
+            # Atualizar nome do arquivo atual se fornecido
+            if filename and hasattr(self, 'current_file_label'):
+                self.current_file_label.configure(text=f"Arquivo: {os.path.basename(filename)}")
+
             # Calcular velocidade
             current_time = time.time()
             time_diff = current_time - self.last_progress_time
@@ -261,13 +313,16 @@ class TelegramDownloaderGUI:
                 eta_seconds = bytes_remaining / speed
                 eta_min = int(eta_seconds // 60)
                 eta_sec = int(eta_seconds % 60)
-                eta_str = f"ETA: {eta_min}m{eta_sec}s"
+                eta_str = f"ETA: {eta_min}m{eta_sec:02d}s"
             else:
                 eta_str = "ETA: --"
 
             # Atualizar label
             progress_text = f"{percent * 100:.1f}% ({current_mb:.1f}/{total_mb:.1f} MB) - {speed_mb:.1f} MB/s - {eta_str}"
             self.progress_label.configure(text=progress_text)
+            
+            # Atualizar a interface
+            self.root.update_idletasks()
 
     def validate_inputs(self):
         """Valida os campos de entrada"""
@@ -329,6 +384,8 @@ class TelegramDownloaderGUI:
         self.log("⏹ Parando download...")
         self.download_btn.configure(state="normal")
         self.stop_btn.configure(state="disabled")
+        # Forçar atualização da interface
+        self.root.update_idletasks()
 
     def run_download(self):
         """Executa o download de forma assíncrona"""
@@ -339,10 +396,14 @@ class TelegramDownloaderGUI:
             loop.run_until_complete(self.download_videos())
         except Exception as e:
             self.log(f"❌ Erro fatal: {e}")
+            import traceback
+            self.log(traceback.format_exc())
         finally:
             self.download_btn.configure(state="normal")
             self.stop_btn.configure(state="disabled")
             self.downloading = False
+            self.progress_label.configure(text="Concluído" if not self.downloading else "Interrompido")
+            self.current_file_label.configure(text="Nenhum arquivo em andamento")
 
     async def download_videos(self):
         """Função principal de download"""
