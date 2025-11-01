@@ -5,7 +5,7 @@ Este projeto permite baixar vídeos do Telegram utilizando múltiplas hashtags. 
 **Disponível em três versões:**
 - 🖥️ **CLI (Linha de Comando)** - Para uso em scripts e automação
 - 🎨 **GUI (CustomTkinter)** - Interface gráfica tradicional
-- ✨ **Flet UI** - Interface web moderna e responsiva **Em desenvolvimento**
+- ✨ **Flet UI** - Interface web moderna e responsiva - **EM DESENVOLVIMENTO**
 
 ## 📋 Pré-requisitos
 
