@@ -1,88 +1,242 @@
-# Telegram Downloader Tools
+# 📥 Telegram Downloader Tools
 
 Este projeto permite baixar vídeos do Telegram utilizando múltiplas hashtags. É uma ferramenta útil para coletar conteúdo de canais ou grupos específicos.
 
-## Pré-requisitos
+**Disponível em duas versões:**
+- 🖥️ **CLI (Linha de Comando)** - Para uso em scripts e automação
+- 🎨 **GUI (Interface Gráfica)** - Interface moderna e intuitiva com customtkinter
 
-- Python 3.6 ou superior
-- Telethon
-- Pandas
+## 📋 Pré-requisitos
 
-## Obter API ID e API Hash
+- Python 3.7 ou superior
+- Conta no Telegram
+- API ID e API Hash (veja seção abaixo)
 
-1. Acesse https://my.telegram.org e faça login com seu número de telefone.
-2. Depois do login, clique em "API development tools".
-3. Preencha o formulário para criar uma nova aplicação (App title, Short name, etc.). Ao finalizar, você verá o seu "api_id" e "api_hash".
+## 🔑 Obter API ID e API Hash
 
-## Instalação
+1. Acesse https://my.telegram.org e faça login com seu número de telefone
+2. Clique em "API development tools"
+3. Preencha o formulário para criar uma nova aplicação (App title, Short name, etc.)
+4. Você verá seu **api_id** e **api_hash**
+
+## 🚀 Instalação
 
 1. Clone o repositório:
-   ```
-   git clone https://github.com/vinicius-dsr/Telegram-Downloader-Tools.git
-   cd telegram-downloader-tools
-   ```
+```bash
+git clone https://github.com/vinicius-dsr/Telegram-Downloader-Tools.git
+cd Telegram-Downloader-Tools
+```
 
 2. Instale as dependências:
-   ```
-   pip install -r requirements.txt
-   ```
-
-## Uso
-
-Para usar a ferramenta, execute o seguinte comando:
-
-```
-python src/download_telegram_video_tags.py --api-id SEU_API_ID --api-hash SEU_API_HASH --target "https://t.me/nomeCanal" --tags "#tag1,#tag2" --out "./downloads"
+```bash
+pip install -r requirements.txt
 ```
 
-## FloodWait (limitação de requisições)
+Ou no Windows, execute: `install_gui.bat`
 
-Ao usar a API do Telegram via Telethon, é possível receber uma exceção `FloodWaitError` quando a conta faz muitas requisições em pouco tempo. O Telegram exige então que você aguarde um certo número de segundos antes de tentar novamente — esse tempo pode variar de alguns segundos a vários minutos.
+---
 
-O script trata FloodWait de três formas principais:
+## 🎨 Versão GUI (Interface Gráfica)
 
-- Retry controlado ao resolver a entidade do `--target` (reduce chamadas repetidas que causam `CheckChatInviteRequest`).
-- Retry quando a iteração por mensagens encontra `FloodWaitError`: o script espera o tempo solicitado e reinicia a iteração.
-- Você pode controlar o comportamento automático com o argumento `--max-flood-wait` (valor em segundos).
+### Características
 
-Com `--max-flood-wait`:
-- Se o FloodWait requerido (`e.seconds`) for menor ou igual ao valor informado, o script aguardará automaticamente `e.seconds + 1` e continuará.
-- Se o FloodWait for maior que `--max-flood-wait`, o script aborta imediatamente e mostra uma instrução clara (para você aguardar manualmente ou reapertar o comando com `--max-flood-wait` maior).
+- ✨ Interface gráfica moderna com tema escuro
+- 📊 Barra de progresso visual em tempo real
+- 📝 Área de log detalhada
+- ⚡ Download assíncrono com velocidade e ETA
+- 🛑 Botão para parar downloads em andamento
+- 💾 Salvar e carregar configurações
+- 🔒 Campo de API Hash mascarado
 
-Valores recomendados:
-- `0`: não aceitar waits automáticos (o script aborta ao primeiro FloodWait). Útil para não deixar o processo bloqueado.
-- `30` ou `60`: aceitar waits curtos automaticamente.
-- `300` (padrão atual do script): aceita waits de até 5 minutos automaticamente.
+### Como Usar a GUI
 
-Exemplos:
-
-```sh
-# aborta imediatamente em qualquer FloodWait
-python3 src/download_telegram_video_tags.py --api-id 123 --api-hash 'SEU_HASH' --target '@canal' --tags '#tag' --max-flood-wait 0
-
-# aceita esperar até 60 segundos automaticamente
-python3 src/download_telegram_video_tags.py --api-id 123 --api-hash 'SEU_HASH' --target '@canal' --tags '#tag' --max-flood-wait 60
-
-# aceita esperar até 1974 segundos (ex.: aceitar um FloodWait específico que apareceu antes)
-python3 src/download_telegram_video_tags.py --api-id 123 --api-hash 'SEU_HASH' --target '@canal' --tags '#tag' --max-flood-wait 1974
+1. **Iniciar a aplicação:**
+```bash
+python src/download_telegram_video_tags_gui.py
 ```
 
-Boas práticas para reduzir FloodWaits:
-- Reduza o número de requisições por execução (`--limit` menor, menos tags por vez).
-- Espalhe as execuções no tempo (rodar em batches com sleep entre eles).
-- Use outra conta/sessão para distribuir carga se necessário.
+2. **Preencher os campos:**
+   - **API ID**: Seu ID da API do Telegram (número)
+   - **API Hash**: Seu Hash da API do Telegram
+   - **Canal/Grupo**: `@nomecanal` ou `https://t.me/nomecanal`
+   - **Tags**: Hashtags separadas por vírgula (ex: `#tag1,#tag2,#tag3`)
+   - **Pasta de saída**: Local onde os vídeos serão salvos (use o botão "Procurar")
+   - **Limite por tag**: Número de vídeos a baixar por tag (0 = sem limite)
+   - **Nome da sessão**: Nome do arquivo de sessão do Telethon
+   - **Max Flood Wait**: Tempo máximo de espera automática em caso de flood wait
 
-Se o script abortar com uma mensagem de FloodWait longa, você pode optar por:
-- aguardar o tempo indicado manualmente e rodar novamente;
-- reexecutar com `--max-flood-wait` maior (aceitar que o processo fique aguardando);
-- reduzir a taxa de requisições e tentar novamente mais tarde.
+3. **Gerenciar Configurações:**
+   - **💾 Salvar Configuração**: Salva seus parâmetros em arquivo JSON
+   - **📂 Carregar Configuração**: Carrega configurações salvas anteriormente
 
-## Canais do Telegram
+4. **Iniciar Download:**
+   - Clique em **"🚀 Iniciar Download"**
+   - Na primeira execução, será necessário autenticar com o Telegram
+   - Acompanhe o progresso na barra e no log
+
+### Recursos da GUI
+
+- **Validação de Campos**: Verifica campos obrigatórios e formatos
+- **Progresso em Tempo Real**: Porcentagem, velocidade (MB/s) e tempo estimado (ETA)
+- **Log Detalhado**: Status de conexão, vídeos encontrados, erros e avisos
+- **Botão Parar**: Cancela o download em andamento a qualquer momento
+
+---
+
+## 🖥️ Versão CLI (Linha de Comando)
+
+### Como Usar o CLI
+
+Execute o seguinte comando:
+
+```bash
+python src/download_telegram_video_tags.py \
+  --api-id SEU_API_ID \
+  --api-hash SEU_API_HASH \
+  --target "https://t.me/nomeCanal" \
+  --tags "#tag1,#tag2" \
+  --out "./downloads"
+```
+
+### Parâmetros do CLI
+
+- `--api-id`: (obrigatório) API ID obtido em my.telegram.org
+- `--api-hash`: (obrigatório) API Hash obtido em my.telegram.org
+- `--target`: (obrigatório) Canal ou grupo (@nomeCanal ou https://t.me/nomeCanal)
+- `--tags`: (obrigatório) Lista de hashtags separadas por vírgula
+- `--out`: Pasta de saída (padrão: ./downloads)
+- `--limit`: Limite de mensagens por tag (0 = sem limite)
+- `--session`: Nome do arquivo de sessão (padrão: session)
+- `--max-flood-wait`: Tempo máximo de FloodWait automático em segundos (padrão: 300)
+
+### Exemplos de Uso CLI
+
+```bash
+# Exemplo básico
+python src/download_telegram_video_tags.py \
+  --api-id 12345678 \
+  --api-hash "a1b2c3d4e5f6g7h8i9j0" \
+  --target "@meucanal" \
+  --tags "#video,#conteudo"
+
+# Com limite e pasta personalizada
+python src/download_telegram_video_tags.py \
+  --api-id 12345678 \
+  --api-hash "a1b2c3d4e5f6g7h8i9j0" \
+  --target "https://t.me/meucanal" \
+  --tags "#tag1,#tag2,#tag3" \
+  --out "C:/Downloads/Videos" \
+  --limit 50
+
+# Não aceitar FloodWaits automáticos
+python src/download_telegram_video_tags.py \
+  --api-id 12345678 \
+  --api-hash "a1b2c3d4e5f6g7h8i9j0" \
+  --target "@canal" \
+  --tags "#tag" \
+  --max-flood-wait 0
+
+# Aceitar FloodWaits de até 60 segundos
+python src/download_telegram_video_tags.py \
+  --api-id 12345678 \
+  --api-hash "a1b2c3d4e5f6g7h8i9j0" \
+  --target "@canal" \
+  --tags "#tag" \
+  --max-flood-wait 60
+```
+
+---
+
+## ⚠️ FloodWait (Limitação de Requisições)
+
+Ao usar a API do Telegram, é possível receber `FloodWaitError` quando a conta faz muitas requisições em pouco tempo. O Telegram exige que você aguarde um certo número de segundos antes de tentar novamente.
+
+### Tratamento de FloodWait
+
+Ambas as versões (CLI e GUI) tratam FloodWait automaticamente:
+
+- **Retry controlado** ao resolver a entidade do target
+- **Retry automático** durante a iteração de mensagens
+- **Controle via `--max-flood-wait`** (CLI) ou campo na GUI
+
+### Comportamento
+
+- Se `FloodWait ≤ max-flood-wait`: aguarda automaticamente e continua
+- Se `FloodWait > max-flood-wait`: aborta e informa o tempo necessário
+
+### Valores Recomendados
+
+- **0**: Não aceitar waits automáticos (aborta imediatamente)
+- **30-60**: Aceitar waits curtos automaticamente
+- **300** (padrão): Aceita waits de até 5 minutos
+
+### Boas Práticas
+
+- Reduza o número de requisições por execução (use `--limit` menor)
+- Espalhe as execuções no tempo (batches com intervalo)
+- Use sessões diferentes se necessário
+- Aguarde manualmente em caso de FloodWaits longos
+
+---
+
+## 📁 Arquivos Gerados
+
+Após o download, você encontrará:
+
+1. **Vídeos**: Salvos na pasta especificada com nomes seguros
+2. **CSV**: `videos_baixados.csv` com informações detalhadas:
+   - Tag usada
+   - ID da mensagem
+   - Data e hora
+   - Nome do arquivo
+   - Legenda completa
+
+---
+
+## 🎨 Personalização da GUI
+
+A interface usa **customtkinter** com tema escuro por padrão. Para mudar:
+
+No arquivo `src/download_telegram_video_tags_gui.py`, linhas 15-16:
+```python
+ctk.set_appearance_mode("dark")  # Altere para "light" ou "system"
+ctk.set_default_color_theme("blue")  # Altere para "green" ou "dark-blue"
+```
+
+---
+
+## 🐛 Solução de Problemas
+
+### Erro ao importar customtkinter
+```bash
+pip install customtkinter --upgrade
+```
+
+### Erro de conexão do Telegram
+- Verifique suas credenciais API ID e API Hash
+- Certifique-se de estar conectado à internet
+
+### Flood Wait muito longo
+- Aumente o valor de "Max Flood Wait"
+- Ou aguarde manualmente e tente novamente mais tarde
+
+---
+
+## 📺 Canais do Telegram
 
 - https://t.me/+hy2KQlxP78JiYmIx
 - https://t.me/+PxqctwKBOjMxMjli
 
+---
 
-## Contribuição
+## 🤝 Contribuição
 
 Sinta-se à vontade para contribuir com melhorias ou correções. Faça um fork do repositório e envie um pull request.
+
+## 📄 Licença
+
+Este projeto está disponível sob os termos da licença do repositório.
+
+---
+
+**Desenvolvido com ❤️ para a comunidade**
