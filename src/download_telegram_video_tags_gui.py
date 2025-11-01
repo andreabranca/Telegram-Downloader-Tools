@@ -276,90 +276,96 @@ class TelegramDownloaderGUI:
         self.log_text.insert("end", message + "\n")
         self.log_text.see("end")
         self.log_text.configure(state="disabled")
-        self.root.update_idletasks()
 
-    def progress_callback(self, current, total, filename=None):
+    def progress_callback(self, current, total, filepath=None):
         """Callback para mostrar progresso do download"""
-        if total > 0:
-            # Atualizar nome do arquivo atual se fornecido
-            if filename and hasattr(self, 'current_file_label'):
-                self.current_file_label.configure(text=f"Arquivo: {os.path.basename(filename)}")
-
-            # Calcular velocidade
-            current_time = time.time()
-            time_diff = current_time - self.last_progress_time
-            bytes_diff = current - self.last_progress_bytes
-
-            if time_diff > 0:
-                speed = bytes_diff / time_diff
-                speed_mb = speed / (1024 * 1024)
-            else:
-                speed_mb = 0
-
-            self.last_progress_time = current_time
-            self.last_progress_bytes = current
-
+        if total <= 0:
+            return
+                
+        # Atualizar barra de progresso
+        progress = current / total if total > 0 else 0
+        
+        # Calcular velocidade
+        current_time = time.time()
+        time_diff = current_time - self.last_progress_time
+        bytes_diff = current - self.last_progress_bytes
+        
+        if time_diff > 0:
+            speed = bytes_diff / time_diff
+            speed_mb = speed / (1024 * 1024)
+        else:
+            speed_mb = 0
+        
+        self.last_progress_time = current_time
+        self.last_progress_bytes = current
+        
+        # Formatar tamanhos
+        current_mb = current / (1024 * 1024)
+        total_mb = total / (1024 * 1024)
+        
+        # Calcular ETA
+        if speed > 0 and current > 0:
+            bytes_remaining = total - current
+            eta_seconds = bytes_remaining / speed
+            eta_min = int(eta_seconds // 60)
+            eta_sec = int(eta_seconds % 60)
+            eta_str = f"ETA: {eta_min}m{eta_sec:02d}s"
+        else:
+            eta_str = "ETA: --"
+        
+        # Atualizar a interface na thread principal
+        self.root.after(0, self._update_progress_ui, progress, current_mb, total_mb, speed_mb, eta_str, filepath)
+    
+    def _update_progress_ui(self, progress, current_mb, total_mb, speed_mb, eta_str, filename=None):
+        """Atualiza a interface do usuário com as informações de progresso"""
+        try:
             # Atualizar barra de progresso
-            percent = current / total
-            self.progress_bar.set(percent)
-
-            # Formatar tamanhos
-            current_mb = current / (1024 * 1024)
-            total_mb = total / (1024 * 1024)
-
-            # Calcular ETA
-            if speed > 0:
-                bytes_remaining = total - current
-                eta_seconds = bytes_remaining / speed
-                eta_min = int(eta_seconds // 60)
-                eta_sec = int(eta_seconds % 60)
-                eta_str = f"ETA: {eta_min}m{eta_sec:02d}s"
-            else:
-                eta_str = "ETA: --"
-
-            # Atualizar label
-            progress_text = f"{percent * 100:.1f}% ({current_mb:.1f}/{total_mb:.1f} MB) - {speed_mb:.1f} MB/s - {eta_str}"
+            self.progress_bar.set(progress)
+            
+            # Atualizar texto de progresso
+            progress_text = f"{progress * 100:.1f}% ({current_mb:.1f}/{total_mb:.1f} MB) - {speed_mb:.1f} MB/s - {eta_str}"
             self.progress_label.configure(text=progress_text)
             
-            # Atualizar a interface
-            self.root.update_idletasks()
+            # Atualizar nome do arquivo se fornecido
+            if filename:
+                self.current_file_label.configure(text=f"Arquivo: {os.path.basename(filename)}")
+            elif not self.downloading:
+                self.current_file_label.configure(text="Nenhum arquivo em andamento")
+        except Exception as e:
+            print(f"Erro ao atualizar UI: {e}")
 
     def validate_inputs(self):
         """Valida os campos de entrada"""
         if not self.api_id_entry.get().strip():
             self.log("❌ Erro: API ID é obrigatório!")
             return False
-
+            
         if not self.api_hash_entry.get().strip():
             self.log("❌ Erro: API Hash é obrigatório!")
             return False
-
+            
         if not self.target_entry.get().strip():
             self.log("❌ Erro: Canal/Grupo é obrigatório!")
             return False
-
+            
+        if not self.output_entry.get().strip():
+            self.log("❌ Erro: Diretório de saída é obrigatório!")
+            return False
+            
+        if not os.path.isdir(self.output_entry.get().strip()):
+            self.log("❌ Erro: Diretório de saída não encontrado!")
+            return False
+            
         if not self.tags_entry.get().strip():
             self.log("❌ Erro: Tags são obrigatórias!")
             return False
-
+            
         try:
             int(self.api_id_entry.get().strip())
         except ValueError:
             self.log("❌ Erro: API ID deve ser um número!")
             return False
-
-        try:
-            int(self.limit_entry.get().strip())
-        except ValueError:
-            self.log("❌ Erro: Limite deve ser um número!")
-            return False
-
-        try:
-            int(self.max_flood_entry.get().strip())
-        except ValueError:
-            self.log("❌ Erro: Max Flood Wait deve ser um número!")
-            return False
-
+            
         return True
 
     def start_download(self):
@@ -370,13 +376,21 @@ class TelegramDownloaderGUI:
         self.downloading = True
         self.download_btn.configure(state="disabled")
         self.stop_btn.configure(state="normal")
+        self.log_text.configure(state="normal")
         self.log_text.delete("1.0", "end")
+        self.log_text.configure(state="disabled")
         self.progress_bar.set(0)
-        self.progress_label.configure(text="Iniciando...")
-
-        # Executar download em thread separada
-        thread = threading.Thread(target=self.run_download, daemon=True)
-        thread.start()
+        self.progress_label.configure(text="Aguardando...")
+        self.current_file_label.configure(text="Preparando...")
+        # Mostrar a área de log ao iniciar o download
+        if not self.log_visible.get():
+            self.toggle_log_visibility()
+        # Forçar atualização da interface
+        self.root.update_idletasks()
+        
+        # Iniciar o download em uma thread separada
+        download_thread = threading.Thread(target=self.run_download, daemon=True)
+        download_thread.start()
 
     def stop_download(self):
         """Para o processo de download"""
@@ -516,12 +530,26 @@ class TelegramDownloaderGUI:
                             # Resetar variáveis de progresso
                             self.last_progress_time = time.time()
                             self.last_progress_bytes = 0
-
-                            await client.download_media(
-                                msg,
-                                file=file_path,
-                                progress_callback=self.progress_callback,
-                            )
+                            
+                            # Atualizar o nome do arquivo antes de iniciar o download
+                            self.root.after(0, lambda f=file_path: self.current_file_label.configure(
+                                text=f"Arquivo: {os.path.basename(f)}"
+                            ))
+                            
+                            # Criar uma função de callback que inclui o nome do arquivo
+                            def progress_callback_wrapper(current, total):
+                                self.progress_callback(current, total, file_path)
+                                return current, total
+                            
+                            try:
+                                await client.download_media(
+                                    msg,
+                                    file=file_path,
+                                    progress_callback=progress_callback_wrapper,
+                                )
+                            except Exception as e:
+                                self.log(f"❌ Erro ao baixar: {e}")
+                                raise
 
                             self.log(f"✅ Concluído: {filename}")
                             total_baixados += 1

@@ -2,9 +2,10 @@
 
 Este projeto permite baixar vídeos do Telegram utilizando múltiplas hashtags. É uma ferramenta útil para coletar conteúdo de canais ou grupos específicos.
 
-**Disponível em duas versões:**
+**Disponível em três versões:**
 - 🖥️ **CLI (Linha de Comando)** - Para uso em scripts e automação
-- 🎨 **GUI (Interface Gráfica)** - Interface moderna e intuitiva com customtkinter
+- 🎨 **GUI (CustomTkinter)** - Interface gráfica tradicional
+- ✨ **Flet UI** - Interface web moderna e responsiva
 
 ## 📋 Pré-requisitos
 
@@ -36,36 +37,43 @@ Ou no Windows, execute: `install_gui.bat`
 
 ---
 
-## 🎨 Versão GUI (Interface Gráfica)
+## 🎨 Versões GUI (Interface Gráfica)
 
-### Características
+### Versão CustomTkinter
 
-- ✨ Interface gráfica moderna com tema escuro
-- 📊 Barra de progresso visual em tempo real
-- 📝 Área de log detalhada
-- ⚡ Download assíncrono com velocidade e ETA
-- 🛑 Botão para parar downloads em andamento
-- 💾 Salvar e carregar configurações
-- 🔒 Campo de API Hash mascarado
+- 🖥️ Interface gráfica tradicional para desktop
+- 🎨 Tema escuro por padrão
+- 📊 Barra de progresso em tempo real
+- 📝 Área de log expansível
+- ⚡ Download assíncrono
+- 🛑 Controle de downloads em andamento
+- 💾 Gerenciamento de configurações
 
-### Como Usar a GUI
+### Versão Flet (Web/Desktop)
 
-1. **Iniciar a aplicação:**
+- 🌐 Interface web moderna e responsiva
+- 📱 Compatível com dispositivos móveis
+- 🎨 Design limpo e intuitivo
+- 📊 Feedback visual em tempo real
+- ⚡ Download assíncrono com indicadores de progresso
+- 🔄 Atualizações em tempo real
+- 📦 Fácil implantação como aplicativo web
+
+### Como Usar a GUI CustomTkinter
+
+1. Execute o arquivo `src/download_telegram_video_tags_gui.py`:
 ```bash
 python src/download_telegram_video_tags_gui.py
 ```
 
-2. **Preencher os campos:**
-   - **API ID**: Seu ID da API do Telegram (número)
-   - **API Hash**: Seu Hash da API do Telegram
-   - **Canal/Grupo**: `@nomecanal` ou `https://t.me/nomecanal`
-   - **Tags**: Hashtags separadas por vírgula (ex: `#tag1,#tag2,#tag3`)
-   - **Pasta de saída**: Local onde os vídeos serão salvos (use o botão "Procurar")
-   - **Limite por tag**: Número de vídeos a baixar por tag (0 = sem limite)
-   - **Nome da sessão**: Nome do arquivo de sessão do Telethon
-   - **Max Flood Wait**: Tempo máximo de espera automática em caso de flood wait
+2. Preencha os campos necessários:
+   - API ID e API Hash (obtidos em [my.telegram.org](https://my.telegram.org))
+   - Nome ou link do canal/grupo (ex: @nomedocanal)
+   - Hashtags para filtrar (separadas por vírgula)
+   - Pasta de saída para os downloads
+   - Limite de mensagens a serem verificadas
 
-3. **Gerenciar Configurações:**
+3. Clique em "Iniciar Download"
    - **💾 Salvar Configuração**: Salva seus parâmetros em arquivo JSON
    - **📂 Carregar Configuração**: Carrega configurações salvas anteriormente
 
